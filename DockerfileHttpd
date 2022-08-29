@@ -1,0 +1,42 @@
+FROM httpd:2.4.54
+LABEL maintainer="kdy <raze0209d@gmail.com>"
+
+RUN apt -y update && apt -y upgrade
+RUN apt install -y wget gcc make libaprutil1-dev
+
+# install mod_jk
+RUN wget https://dlcdn.apache.org/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.48-src.tar.gz \
+    && tar xzf tomcat-connectors-1.2.48-src.tar.gz \
+    && cd tomcat-connectors-1.2.48-src/native \
+    && ./configure --with-apxs=/usr/local/apache2/bin/apxs \
+    && make \
+    && make install \
+    && cd ../.. \
+    && rm -rf tomcat-connectors-1.2.48-src \
+    && rm -f tomcat-connectors-1.2.48-src.tar.gz
+
+ARG conf
+ARG modules
+
+COPY $conf /usr/local/apache2/conf
+
+EXPOSE 80
+
+# RUN wget http://archive.apache.org/dist/apr/apr-1.7.0.tar.gz \
+#     && tar xzf apr-1.7.0.tar.gz \
+#     && cd ./apr-1.7.0 \
+#     # && cp -arp libtool libtoolT \
+#     && ./configure \
+#     && make && make install \
+#     && cd .. \
+#     && rm -f apr-1.7.0.tar.gz \
+#     && rm -rf apr-1.7.0
+
+# RUN wget http://archive.apache.org/dist/apr/apr-util-1.6.1.tar.gz \
+#     && tar xzf apr-util-1.6.1.tar.gz \
+#     && cd ./apr-util-1.6.1 \
+#     && ./configure --with-apr=/usr/local/apr \
+#     && make && make install \
+#     && cd .. \
+#     && rm -f apr-util-1.6.1.tar.gz \
+#     && rm -rf apr-util-1.6.1

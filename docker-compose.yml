@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+    # tomcat 1번 서버입니다. 같은 설정을 2번에서도 사용하기 때문에 &was로 명명하고 tomcat2에서 참조합니다.
+    # tomcat1 서비스의 모든 관련파일은 ./tomcat1 폴더에서 가져옵니다. 
+    tomcat01: &was
+        container_name: tomcat01
+        environment:
+            - JAVA_OPTS=-Dfile.encoding=utf-8
+        build:
+            context: .
+            args:
+                conf: Tomcat/conf01
+                warpath: Tomcat/webapps/ROOT.war
+            dockerfile: ./DockerfileTomcat
+    tomcat02:
+        <<: *was
+        container_name: tomcat02
+        build:
+            context: .
+            args:
+                conf: Tomcat/conf02
+                warpath: Tomcat/webapps/ROOT.war
+            dockerfile: ./DockerfileTomcat
+    httpd:
+        build:
+            context: .
+            dockerfile: ./DockerfileHttpd
+            args:
+                conf: Httpd/conf
+        ports:
+            - 80:80
+    # nginx:
+    #     image: nginx
+    #     ports:
+    #         - 80:80
+    #     volumes:
+    #         - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
