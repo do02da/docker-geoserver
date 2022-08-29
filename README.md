@@ -1,7 +1,9 @@
 ## Docker-compose + Apache HTTPD Web Server + Apache Tomcat * 2
-- ### Apache Httpd 설정
-  * httpd.conf
-```conf
+---
+### Apache Httpd 설정
+
+- #### httpd.conf
+```properties
 #ServerName www.example.com:80 주석해제
 ServerName localhost:80
 
@@ -9,8 +11,8 @@ Include conf/vhosts.conf
 Include conf/mod_jk.conf
 ```
 
-  * vhosts.conf
-```conf
+- #### vhosts.conf
+```properties
 # LoadModule jk_module modules/mod_jk.so : 모듈 mod_jk.so 불러오기
 # <VirtualHost *:80> : 모든 IP주소에서 요청을 기다림
 # ServerName localhost : server 이름 - 웹서버 주소
@@ -20,27 +22,27 @@ Include conf/mod_jk.conf
 
 LoadModule jk_module modules/mod_jk.so
 <VirtualHost *:80>
-ServerName localhost
-# JkUnmount /*.html tomcat_lb
-JkMount /* tomcat_lb
+  ServerName localhost
+  # JkUnmount /*.html tomcat_lb
+  JkMount /* tomcat_lb
 </VirtualHost>
 ```
 
-  * mod_jk.conf
-```conf
+  - #### mod_jk.conf
+```properties
 # JkLogFile logs/mod_jk.log : log 저장
 # JkLogStampFormat "[%a %b %d %H:%M:%S %Y]" : 날짜/시간을 스트링으로 변환
 <ifModule jk_module>
-JkWorkersFile conf/workers.properties
-JkLogFile logs/mod_jk.log
-JkLogLevel info
-JkShmFile /var/log/httpd/jk-runtime-status
-JkWatchdogInterval 30
-JkLogStampFormat "[%a %b %d %H:%M:%S %Y]"
+  JkWorkersFile conf/workers.properties
+  JkLogFile logs/mod_jk.log
+  JkLogLevel info
+  JkShmFile /var/log/httpd/jk-runtime-status
+  JkWatchdogInterval 30
+  JkLogStampFormat "[%a %b %d %H:%M:%S %Y]"
 </ifModule>
 ```
   
-  * workers.properties
+- #### workers.properties
 ```properties
 worker.list=tomcat_lb
 worker.tomcat_lb.type=lb                            # lb == loadbalancer
@@ -59,13 +61,15 @@ worker.tomcat02.type=ajp13
 worker.tomcat02.lbfactor=1
 ```
 
-- Tomcat 서버 2기
-  * server.xml
-    - 주석 해제
-      * `<Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>`
-      * `<Connector protocol="AJP/1.3" ~ />`
-    - jvmRoute 추가 : `<Engine name="Catalina" defaultHost="localhost" jvmRoute="tomcat01">`
-    - SSL 미사용시 AJP Connector에 `secretRequired="false"` 추가
+---
+
+## Tomcat 서버 설정
+- ### server.xml
+  * #### 주석 해제
+    - `<Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>`
+    - `<Connector protocol="AJP/1.3" ~ />`
+  * #### jvmRoute 추가 (tomcat01, tomcat02) : `<Engine name="Catalina" defaultHost="localhost" jvmRoute="tomcat01">`
+  * #### SSL 미사용시 AJP Connector에 `secretRequired="false"` 추가
 
 ```xml
   <Connector protocol="AJP/1.3"
@@ -80,14 +84,23 @@ worker.tomcat02.lbfactor=1
   </Engine>
 ```
 
-  * web.xml : `<distributable/>` 추가
+- ### web.xml : `<distributable/>` 추가
 ```xml
 <web-app>
   <!-- 생략 -->
   <distributable/>
 </web-app>
 ```
-  * geoserver
-    * Tomcat 10 사용시 `org.apache.catalina.core.StandardContext.listenerStart Error configuring application listener of class` 에러 발생 가능 ([참고](https://gis.stackexchange.com/questions/389555/geoserver-not-compatible-with-tomcat-10)) -> Tomcat 9 사용
+--- 
+## geoserver
+* [GeoServer 공식 다운로드 홈페이지](https://geoserver.org/download/)에서 Web Archive (war) 파일 다운로드
+* 압축 해제 후 geoserver.war 파일을 ROOT.war로 이름 변경
+* Tomcat 10 사용시 `org.apache.catalina.core.StandardContext.listenerStart Error configuring application listener of class` 에러 발생 가능 ([참고](https://gis.stackexchange.com/questions/389555/geoserver-not-compatible-with-tomcat-10)) -> Tomcat 9 사용
     
-  ---
+---
+
+## nginx
+- ### AJP 대신 proxy pass 방식 사용 → nginx.conf 파일 참고
+- ### docker-compose.yml에서 httpd 주석, nginx 주석 해제하여 사용 가능
+ 
+---
